@@ -14,25 +14,25 @@ type Config struct {
 }
 
 type Client struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	Identity string
+	host     string
+	port     int
+	username string
+	password string
+	identity string
 }
 
 func New(cfg *Config) *Client {
 	return &Client{
-		Host     : cfg.Host,
-		Port     : cfg.Port,
-		Username : cfg.Username,
-		Password : cfg.Password,
-		Identity : cfg.Identity,
+		host     : cfg.Host,
+		port     : cfg.Port,
+		username : cfg.Username,
+		password : cfg.Password,
+		identity : cfg.Identity,
 	}
 }
 
 func (c *Client) Send(to string, message string, subject string) error {
-	auth := smtp.PlainAuth(c.Identity, c.Username, c.Password, c.Host)
+	auth := smtp.PlainAuth(c.identity, c.username, c.password, c.host)
 
 	msg := []byte(
 		"To: " + to + "\r\n" +
@@ -41,5 +41,5 @@ func (c *Client) Send(to string, message string, subject string) error {
 		message + "\r\n",
 	)
 
-	return smtp.SendMail(fmt.Sprintf("%s:%d", c.Host, c.Port), auth, c.Username, []string{to}, msg)
+	return smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.username, []string{to}, msg)
 }

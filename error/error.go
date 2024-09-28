@@ -10,8 +10,8 @@ import (
 type Error *errorStruct
 
 type errorStruct struct {
-	Message string `json:"error"`
-	code    statusType
+	Message string     `json:"error"`
+	Code    statusType `json:"-"`
 }
 
 const (
@@ -28,12 +28,12 @@ type statusType int
 func New(msg string, status statusType) Error {
 	return &errorStruct{
 		Message: msg,
-		code:    status,
+		Code:    status,
 	}
 }
 
 func (e *errorStruct) ToHttpCode() int {
-	switch e.code {
+	switch e.Code {
 
 	case Internal:
 		return http.StatusInternalServerError
@@ -64,7 +64,7 @@ func (e *errorStruct) ToGRPCErr() error {
 }
 
 func (e *errorStruct) ToGRPCCode() codes.Code {
-	switch e.code {
+	switch e.Code {
 
 	case Internal:
 		return codes.Internal
