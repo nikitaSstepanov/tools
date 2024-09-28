@@ -7,9 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-type Error *errorStruct
-
-type errorStruct struct {
+type Error struct {
 	Message string     `json:"error"`
 	Code    statusType `json:"-"`
 }
@@ -25,14 +23,14 @@ const (
 
 type statusType int
 
-func New(msg string, status statusType) Error {
-	return &errorStruct{
+func New(msg string, status statusType) *Error {
+	return &Error{
 		Message: msg,
 		Code:    status,
 	}
 }
 
-func (e *errorStruct) ToHttpCode() int {
+func (e *Error) ToHttpCode() int {
 	switch e.Code {
 
 	case Internal:
@@ -59,11 +57,11 @@ func (e *errorStruct) ToHttpCode() int {
 	}
 }
 
-func (e *errorStruct) ToGRPCErr() error {
+func (e *Error) ToGRPCErr() error {
 	return status.Errorf(e.ToGRPCCode(), e.Message)
 }
 
-func (e *errorStruct) ToGRPCCode() codes.Code {
+func (e *Error) ToGRPCCode() codes.Code {
 	switch e.Code {
 
 	case Internal:
