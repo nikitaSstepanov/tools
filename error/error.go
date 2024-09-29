@@ -1,7 +1,6 @@
 package e
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -123,7 +122,7 @@ func (e *errorStruct) ToHttpCode() int {
 }
 
 func (e *errorStruct) Error() string {
-	return fmt.Sprintf("%s", e.Message)
+	return e.Message
 }
 
 func (e *errorStruct) ToGRPCErr() error {
@@ -158,4 +157,12 @@ func (e *errorStruct) ToGRPCCode() codes.Code {
 // SlErr returns slog.Attr with key "error" and err value.
 func (e *errorStruct) SlErr() slog.Attr {
 	return slog.String("error", e.Message)
+}
+
+func E(err error) Error {
+	return New(err.Error(), Internal)
+}
+
+func EC(err error, code statusType) Error {
+	return New(err.Error(), code)
 }
