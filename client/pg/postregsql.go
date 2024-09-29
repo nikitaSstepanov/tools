@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Client is interface for communicate with postgres database.
@@ -34,7 +34,6 @@ func getConfig(cfg *Config) (*pgxpool.Config, error) {
 		"user=%s password=%s host=%s port=%d dbname=%s sslmode=%s",
 		cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
 	))
-
 	if err != nil {
 		return nil, err
 	}

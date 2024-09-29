@@ -2,7 +2,6 @@ package log
 
 import (
 	"log/slog"
-	"context"
 	"time"
 )
 
@@ -70,8 +69,4 @@ func ErrAttr(err error) Attr {
 
 func Default() *Logger {
 	return slog.Default()
-}
-
-func L(ctx context.Context) *Logger {
-	return loggerFromContext(ctx)
 }

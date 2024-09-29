@@ -1,13 +1,13 @@
 package server
 
 import (
-	"os/signal"
-	"net/http"
-	"log/slog"
-	"syscall"
 	"context"
-	"time"
+	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 type Config struct {
