@@ -23,23 +23,21 @@ type Client struct {
 
 func New(cfg *Config) *Client {
 	return &Client{
-		host     : cfg.Host,
-		port     : cfg.Port,
-		username : cfg.Username,
-		password : cfg.Password,
-		identity : cfg.Identity,
+		host:     cfg.Host,
+		port:     cfg.Port,
+		username: cfg.Username,
+		password: cfg.Password,
+		identity: cfg.Identity,
 	}
 }
 
 func (c *Client) Send(to string, message string, subject string) error {
 	auth := smtp.PlainAuth(c.identity, c.username, c.password, c.host)
 
-	msg := []byte(
-		"To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" +
-		message + "\r\n",
-	)
+	msg := []byte(fmt.Sprintf(
+		"To: %s \r\n Subject: %s \r\n \r\n %s \r\n",
+		to, subject, message,
+	))
 
 	return smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.username, []string{to}, msg)
 }

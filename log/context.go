@@ -10,10 +10,10 @@ func ContextWithLogger(ctx context.Context, l *Logger) context.Context {
 }
 
 // loggerFromContext returns logger from context.
-func loggerFromContext(ctx context.Context) *Logger {
+func LoggerFromContext(ctx context.Context) *Logger {
 	if l, ok := ctx.Value(ctxLogger{}).(*Logger); ok {
 		return l
 	}
 
-	return Default()
+	panic("logger not found in context")
 }

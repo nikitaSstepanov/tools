@@ -7,14 +7,39 @@ import (
 	"github.com/nikitaSstepanov/tools/log/handlers"
 )
 
+// Config holds the configuration settings for the logger.
+// It includes options for logging level, output format, and other behavior.
 type Config struct {
-	Level      string `yaml:"level"       env:"LOGGER_LEVEL"       env-default:"info"`
-	AddSource  bool   `yaml:"add_source"  env:"LOGGER_ADD_SOURCE"  env-default:"true"`
-	IsJSON     bool   `yaml:"is_json"     env:"LOGGER_IS_JSON"     env-default:"true"`
-	Out        string `yaml:"out"         env:"LOGGER_OUT"         env-default:"stdout"`
-	OutPath    string `yaml:"out_path"    env:"LOGGER_OUT_PATH"    env-default:""`
-	SetDefault bool   `yaml:"set_default" env:"LOGGER_SET_DEFAULT" env-default:"true"`
-	Type       string `yaml:"type"        env:"LOGGER_TYPE"        env-default:"default"` 
+	// Level specifies the logging level (e.g., info, debug, error).
+	// It can be set via YAML configuration or environment variable.
+	Level string `yaml:"level" env:"LOGGER_LEVEL" env-default:"info"`
+
+	// AddSource indicates whether to include the source of the log message (e.g., file and line number).
+	// This can be controlled through YAML or an environment variable.
+	AddSource bool ` yaml:"add_source" env:"LOGGER_ADD_SOURCE" env-default:"true"`
+
+	// IsJSON determines if the log output should be in JSON format.
+	// If true, logs will be structured as JSON; otherwise, they will be plain text.
+	IsJSON bool `yaml:"is_json" env:"LOGGER_IS_JSON" env-default:"true"`
+
+	// Writer specifies where the logs should be written.
+	// It can be a file path or a predefined output like "stdout".
+	Writer string `yaml:"writer" env:"LOGGER_WRITER" env-default:"stdout"`
+
+	// OutPath is the path to the output file if logging to a file.
+	// If left empty, logs will go to the Writer specified.
+	OutPath string `yaml:"out_path" env:"LOGGER_OUT_PATH" env-default:""`
+
+	// SetDefault indicates whether to set default logger options.
+	// This can be used to ensure that certain configurations are applied automatically.
+	SetDefault bool `yaml:"set_default" env:"LOGGER_SET_DEFAULT" env-default:"true"`
+
+	// Type defines the type of logger to use.
+	// It can be one of the following:
+	// - "pretty": for human-readable logs with color and formatting.
+	// - "discard": to ignore all log messages.
+	// - "default": for standard logging behavior.
+	Type string `yaml:"type" env:"LOGGER_TYPE" env-default:"default"`
 }
 
 func New(cfg *Config) *Logger {
@@ -37,7 +62,7 @@ func setupHandler(cfg *Config) Handler {
 	out := setOut(cfg)
 
 	var handler Handler
-	
+
 	switch cfg.Type {
 
 	case PrettyLogger:
@@ -45,12 +70,12 @@ func setupHandler(cfg *Config) Handler {
 
 	case DiscardLogger:
 		handler = handlers.NewDiscard()
-		
+
 	default:
 		if cfg.IsJSON {
 			handler = NewJSONHandler(out, opts)
 		} else {
-			handler  = NewTextHandler(out, opts)
+			handler = NewTextHandler(out, opts)
 		}
 
 	}
@@ -84,7 +109,7 @@ func setHandlerOptions(level Level, AddSource bool) *HandlerOptions {
 }
 
 func setOut(cfg *Config) *os.File {
-	if cfg.Out == FileOut {
+	if cfg.Writer == FileOut {
 		return getLogFile(cfg.OutPath)
 	}
 
@@ -104,7 +129,7 @@ func getLogFile(path string) *os.File {
 		panic(err)
 	}
 
-	logFile, err := os.OpenFile(path + "/all.log", os.O_CREATE|os.O_RDWR, 0644)
+	logFile, err := os.OpenFile(path+"/all.log", os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
 	}

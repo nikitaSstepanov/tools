@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"log/slog"
 	"context"
+	"log/slog"
 )
 
-type Discard struct {}
+type Discard struct{}
 
 func NewDiscard() *Discard {
 	return &Discard{}
