@@ -35,13 +35,7 @@ func (c *Client) Send(to string, message string, subject string, contentType str
 	auth := smtp.PlainAuth(c.identity, c.username, c.password, c.host)
 
 	msg := []byte(fmt.Sprintf(
-		`
-			From: %s \r\n 
-			To: %s \r\n 
-			Subject: %s \n
-			%s \r\n \r\n 
-			%s \r\n
-		`,
+		"From: %s\r\nTo: %s\r\nSubject: %s\n%s\n\n%s\r\n",
 		c.username, to, subject, contentType, message,
 	))
 
