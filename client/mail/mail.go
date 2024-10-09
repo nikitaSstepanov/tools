@@ -31,12 +31,18 @@ func New(cfg *Config) *Client {
 	}
 }
 
-func (c *Client) Send(to string, message string, subject string) error {
+func (c *Client) Send(to string, message string, subject string, contentType string) error {
 	auth := smtp.PlainAuth(c.identity, c.username, c.password, c.host)
 
 	msg := []byte(fmt.Sprintf(
-		"To: %s \r\n Subject: %s \r\n \r\n %s \r\n",
-		to, subject, message,
+		`
+			From: %s \r\n 
+			To: %s \r\n 
+			Subject: %s \n
+			%s \r\n \r\n 
+			%s \r\n
+		`,
+		c.username, to, subject, contentType, message,
 	))
 
 	return smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.username, []string{to}, msg)
