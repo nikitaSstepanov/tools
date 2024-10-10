@@ -1,10 +1,10 @@
-package log
+package sl
 
 import (
 	"log/slog"
 	"os"
 
-	"github.com/nikitaSstepanov/tools/log/handlers"
+	"github.com/nikitaSstepanov/tools/sl/handlers"
 )
 
 // Config holds the configuration settings for the logger.
@@ -24,7 +24,7 @@ type Config struct {
 
 	// Writer specifies where the logs should be written.
 	// It can be a file path or a predefined output like "stdout".
-	Writer string `yaml:"writer" env:"LOGGER_WRITER" env-default:"stdout"`
+	Writer string `yaml:"writer" env:"LOGGER_WRITER" env-default:"stderr"`
 
 	// OutPath is the path to the output file if logging to a file.
 	// If left empty, logs will go to the Writer specified.
@@ -36,12 +36,13 @@ type Config struct {
 
 	// Type defines the type of logger to use.
 	// It can be one of the following:
-	// - "pretty": for human-readable logs with color and formatting.
+	// - "pretty" or "dev": for human-readable logs with color and formatting.
 	// - "discard": to ignore all log messages.
 	// - "default": for standard logging behavior.
 	Type string `yaml:"type" env:"LOGGER_TYPE" env-default:"default"`
 }
 
+// New returns the slog.Logger with the specified configuration.
 func New(cfg *Config) *Logger {
 	handler := setupHandler(cfg)
 
@@ -64,6 +65,9 @@ func setupHandler(cfg *Config) Handler {
 	var handler Handler
 
 	switch cfg.Type {
+
+	case DevLogger:
+		handler = handlers.NewDevSlog(out, opts)
 
 	case PrettyLogger:
 		handler = handlers.NewPretty(out, opts)
@@ -113,7 +117,7 @@ func setOut(cfg *Config) *os.File {
 		return getLogFile(cfg.OutPath)
 	}
 
-	return os.Stdout
+	return os.Stderr
 }
 
 func getLogFile(path string) *os.File {
@@ -125,11 +129,11 @@ func getLogFile(path string) *os.File {
 		panic(err)
 	}
 
-	if err := os.MkdirAll(path, 0777); err != nil {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		panic(err)
 	}
 
-	logFile, err := os.OpenFile(path+"/all.log", os.O_CREATE|os.O_RDWR, 0644)
+	logFile, err := os.OpenFile(path+"/all.log", os.O_CREATE|os.O_RDWR, 0o0644)
 	if err != nil {
 		panic(err)
 	}

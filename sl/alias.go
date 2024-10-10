@@ -1,6 +1,7 @@
-package log
+package sl
 
 import (
+	"context"
 	"log/slog"
 	"time"
 )
@@ -12,6 +13,7 @@ const (
 	LevelDebug = slog.LevelDebug
 
 	PrettyLogger  = "pretty"
+	DevLogger     = "dev"
 	DiscardLogger = "discard"
 	DefaultLogger = "default"
 
@@ -46,6 +48,12 @@ var (
 	GroupValue = slog.GroupValue
 	Group      = slog.Group
 )
+
+// L returns *slog.Logger from context
+// if context doesn't have logger, returns slog.Default.
+func L(ctx context.Context) *Logger {
+	return loggerFromContext(ctx)
+}
 
 func Float32Attr(key string, val float32) Attr {
 	return slog.Float64(key, float64(val))

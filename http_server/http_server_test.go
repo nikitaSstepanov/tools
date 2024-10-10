@@ -1,12 +1,13 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
 
 	e "github.com/nikitaSstepanov/tools/error"
-	"github.com/nikitaSstepanov/tools/log"
+	"github.com/nikitaSstepanov/tools/sl"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,12 +59,13 @@ func TestServer_Shutdown(t *testing.T) {
 
 	go func() {
 		time.Sleep(3 * time.Second)
-		server.notify <- e.New("some error", e.Internal)
+		server.notify <- e.New("some msg", nil, e.Internal)
 	}()
 
-	mockLogger := log.New(&log.Config{Type: "discard"})
+	mockLogger := sl.New(&sl.Config{Type: "discard"})
+	ctx := sl.ContextWithLogger(context.Background(), mockLogger)
 
-	err := server.Shutdown(mockLogger)
+	err := server.Shutdown(ctx)
 
 	assert.NoError(t, err)
 }
@@ -83,7 +85,7 @@ func TestServer_Notify(t *testing.T) {
 	server := New(handler, cfg)
 
 	// Start the server
-	go server.Start()
+	server.Start()
 
 	// Wait for the notification channel to be ready
 	time.Sleep(100 * time.Millisecond)

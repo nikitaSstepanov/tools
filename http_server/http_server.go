@@ -2,12 +2,13 @@ package server
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/nikitaSstepanov/tools/sl"
 )
 
 type Config struct {
@@ -51,7 +52,9 @@ func (s *Server) Notify() <-chan error {
 	return s.notify
 }
 
-func (s *Server) Shutdown(log *slog.Logger) error {
+func (s *Server) Shutdown(ctx context.Context) error {
+	log := sl.L(ctx)
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
