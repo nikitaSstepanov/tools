@@ -6,11 +6,12 @@ import (
 	"github.com/pressly/goose"
 )
 
+// Migrate applies all pending database migrations to the specified database.
 func Migrate(db *sql.DB, dialect Dialect, path string) error {
 	if err := db.Ping(); err != nil {
 		return err
 	}
-	
+
 	d := diaToStr(dialect)
 
 	if err := goose.SetDialect(d); err != nil {
@@ -24,6 +25,7 @@ func Migrate(db *sql.DB, dialect Dialect, path string) error {
 	return nil
 }
 
+// Down rolls back a single migration from the current version
 func Down(db *sql.DB, dialect Dialect, path string) error {
 	if err := db.Ping(); err != nil {
 		return err
@@ -42,6 +44,7 @@ func Down(db *sql.DB, dialect Dialect, path string) error {
 	return nil
 }
 
+// DownTo rolls back migrations to a specific version.
 func DownTo(db *sql.DB, dialect Dialect, path string, version int64) error {
 	if err := db.Ping(); err != nil {
 		return err

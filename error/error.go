@@ -17,6 +17,10 @@ type Error interface {
 	// This method allows users to retrieve a human-readable description of the error.
 	GetMessage() string
 
+	// GetError returns the underlying error.
+	// This method provides access to the original error that may contain more details.
+	GetError() error
+
 	// GetCode returns the status code associated with the error.
 	// The statusType can be a custom type that represents various error codes.
 	GetCode() statusType
@@ -24,6 +28,10 @@ type Error interface {
 	// WithMessage sets a new error message for the error instance.
 	// This method allows users to update the error message dynamically.
 	WithMessage(string)
+
+	// WithErr sets a new underlying error for the error instance.
+	// This method allows users to associate a different error with this custom error type.
+	WithErr(err error)
 
 	// WithCode sets a new status code for the error instance.
 	// This method allows users to update the error code dynamically.
@@ -54,8 +62,9 @@ type Error interface {
 }
 
 type errorStruct struct {
-	Message string     `json:"error"`
-	Code    statusType `json:"-"`
+	message string
+	err     error
+	code    statusType
 }
 
 const (
@@ -70,32 +79,41 @@ const (
 type statusType int
 
 // New returns type Error with message.
-func New(msg string, status statusType) Error {
+func New(msg string, err error, status statusType) Error {
 	return &errorStruct{
-		Message: msg,
-		Code:    status,
+		message: msg,
+		err:     err,
+		code:    status,
 	}
 }
 
 func (e *errorStruct) GetMessage() string {
-	return e.Message
+	return e.message
+}
+
+func (e *errorStruct) GetError() error {
+	return e.err
 }
 
 func (e *errorStruct) GetCode() statusType {
-	return e.Code
+	return e.code
 }
 
 func (e *errorStruct) WithMessage(msg string) {
-	e.Message = msg
+	e.message = msg
+}
+
+func (e *errorStruct) WithErr(err error) {
+	e.err = err
 }
 
 func (e *errorStruct) WithCode(status statusType) {
-	e.Code = status
+	e.code = status
 }
 
 // ToHttpCode convert Error to http status code.
 func (e *errorStruct) ToHttpCode() int {
-	switch e.Code {
+	switch e.code {
 
 	case Internal:
 		return http.StatusInternalServerError
@@ -122,16 +140,26 @@ func (e *errorStruct) ToHttpCode() int {
 }
 
 func (e *errorStruct) Error() string {
-	return e.Message
+	if e.message == "" && e.err == nil {
+		return "nil"
+	}
+	if e.message == "" {
+		return e.err.Error()
+	}
+	if e.err == nil {
+		return e.message
+	}
+
+	return e.message + ": " + e.err.Error()
 }
 
 func (e *errorStruct) ToGRPCErr() error {
-	return status.Errorf(e.ToGRPCCode(), e.Message)
+	return status.Error(e.ToGRPCCode(), e.message)
 }
 
 // ToGRPCCode convert Error to grpc status code.
 func (e *errorStruct) ToGRPCCode() codes.Code {
-	switch e.Code {
+	switch e.code {
 
 	case Internal:
 		return codes.Internal
@@ -154,15 +182,17 @@ func (e *errorStruct) ToGRPCCode() codes.Code {
 	}
 }
 
-// SlErr returns slog.Attr with key "error" and err value.
 func (e *errorStruct) SlErr() slog.Attr {
-	return slog.String("error", e.Message)
+	return slog.String("error", e.Error())
 }
 
+// E creates a new custom error instance if the provided error is not nil.
+// It initializes the custom error with an empty message and associates the given error
+// with an internal status code by default. If the provided error is nil, it returns nil.
 func E(err error) Error {
-	return New(err.Error(), Internal)
-}
+	if err != nil {
+		return New("", err, Internal)
+	}
 
-func EC(err error, code statusType) Error {
-	return New(err.Error(), code)
+	return nil
 }

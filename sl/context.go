@@ -1,6 +1,9 @@
-package log
+package sl
 
-import "context"
+import (
+	"context"
+	"log/slog"
+)
 
 type ctxLogger struct{}
 
@@ -9,11 +12,11 @@ func ContextWithLogger(ctx context.Context, l *Logger) context.Context {
 	return context.WithValue(ctx, ctxLogger{}, l)
 }
 
-// loggerFromContext returns logger from context.
-func LoggerFromContext(ctx context.Context) *Logger {
+
+func loggerFromContext(ctx context.Context) *Logger {
 	if l, ok := ctx.Value(ctxLogger{}).(*Logger); ok {
 		return l
 	}
 
-	panic("logger not found in context")
+	return slog.Default()
 }

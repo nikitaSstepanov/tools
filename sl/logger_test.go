@@ -1,4 +1,4 @@
-package log
+package sl
 
 import (
 	"context"
@@ -60,12 +60,12 @@ func TestNewLogger(t *testing.T) {
 		t.Errorf("logger should NOT be default logger")
 	}
 
-	assert.Panics(t, func() { LoggerFromContext(ctx) })
+	assert.Equal(t, slog.Default(), L(ctx))
 
 	logger = New(&Config{AddSource: false, IsJSON: false})
 	ctx = ContextWithLogger(ctx, logger)
 
-	if LoggerFromContext(ctx) != logger {
+	if loggerFromContext(ctx) != logger {
 		t.Errorf("logger should be from context logger")
 	}
 }

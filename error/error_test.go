@@ -1,6 +1,7 @@
 package e
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"testing"
@@ -12,12 +13,17 @@ import (
 
 func TestNew(t *testing.T) {
 	msg := "An error occurred"
+	testErr := errors.New("some error")
 	code := NotFound
 
-	err := New(msg, code)
+	err := New(msg, testErr, code)
 
 	if err.GetMessage() != msg {
 		t.Errorf("Expected message %q, got %q", msg, err.GetMessage())
+	}
+
+	if errors.Is(err.GetError(), err) {
+		t.Errorf("Expected message %s, got %s", err.Error(), err.GetError().Error())
 	}
 
 	if err.GetCode() != code {
@@ -27,8 +33,9 @@ func TestNew(t *testing.T) {
 
 func TestWithMessage(t *testing.T) {
 	initialMsg := "Initial error"
+	testErr := errors.New("some error")
 	code := Internal
-	err := New(initialMsg, code)
+	err := New(initialMsg, testErr, code)
 
 	newMsg := "Updated error"
 	err.WithMessage(newMsg)
@@ -39,9 +46,10 @@ func TestWithMessage(t *testing.T) {
 }
 
 func TestWithCode(t *testing.T) {
-	msg := "Some error"
+	msg := "Some msg"
+	testErr := errors.New("Some error")
 	initialCode := Forbidden
-	err := New(msg, initialCode)
+	err := New(msg, testErr, initialCode)
 
 	newCode := Internal
 	err.WithCode(newCode)
@@ -66,24 +74,60 @@ func TestToHttpCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := New("", tt.code)
+		err := New("", nil, tt.code)
 		assert.Equal(t, tt.expected, err.ToHttpCode())
 	}
 }
 
 func TestError(t *testing.T) {
-	msg := "This is an error message"
-	err := New(msg, Internal)
+	t.Parallel()
 
-	got := err.Error()
-	if got != msg {
-		t.Errorf("Error() = %q; want %q", got, msg)
+	tests := []struct {
+		name   string
+		err    error
+		msg    string
+		expect string
+	}{{
+		name:   "AllFields",
+		err:    errors.New("some error"),
+		msg:    "some message",
+		expect: "some message: some error",
+	},
+		{
+			name:   "Only Message",
+			err:    nil,
+			msg:    "some message",
+			expect: "some message",
+		},
+		{
+			name:   "Only error",
+			err:    errors.New("some error"),
+			msg:    "",
+			expect: "some error",
+		},
+		{
+			name:   "Nil fileds",
+			err:    nil,
+			msg:    "",
+			expect: "nil",
+		}}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := New(tc.msg, tc.err, Internal)
+
+			assert.Equal(t, tc.expect, err.Error())
+		})
 	}
+
 }
 
 func TestToGRPCErr(t *testing.T) {
-	msg := "This is a gRPC error"
-	err := New(msg, Internal)
+	msg := "This is a gRPC error message"
+	testErr := errors.New("some grpc error")
+	err := New(msg, testErr, Internal)
 
 	grpcErr := err.ToGRPCErr()
 	if grpcErr == nil {
@@ -91,7 +135,7 @@ func TestToGRPCErr(t *testing.T) {
 	}
 
 	// Check if the gRPC error message is as expected
-	assert.ErrorIs(t, grpcErr, status.Errorf(codes.Internal, msg))
+	assert.ErrorIs(t, grpcErr, status.Error(codes.Internal, msg))
 
 	// Check if the gRPC error code is as expected
 	grpcStatus, ok := status.FromError(grpcErr)
@@ -117,15 +161,45 @@ func TestToGRPCCode(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		err := New("", tc.code)
+		err := New("", nil, tc.code)
 		assert.Equal(t, tc.expected, err.ToGRPCCode())
 	}
 }
 
 func TestSlErr(t *testing.T) {
 	msg := "test error for slog"
+	testErr := errors.New("some error")
 	code := Internal
-	err := New(msg, code)
+	err := New(msg, testErr, code)
 
-	assert.Equal(t, slog.String("error", msg), err.SlErr())
+	assert.Equal(t, slog.String("error", err.Error()), err.SlErr())
+}
+
+func TestE(t *testing.T) {
+	t.Parallel()
+
+	testErr := errors.New("some error")
+	tests := []struct {
+		name string
+		err  error
+		want Error
+	}{
+		{
+			name: "Nil error",
+			err:  nil,
+			want: nil,
+		},
+		{
+			name: "Not nil error",
+			err:  testErr,
+			want: New("", testErr, Internal),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, E(tt.err))
+		})
+	}
 }

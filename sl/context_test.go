@@ -1,4 +1,4 @@
-package log
+package sl
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func TestLoggerFromContext_WithLogger(t *testing.T) {
 	ctxWithLogger := ContextWithLogger(ctx, logger)
 
 	// Extract logger using loggerFromContext
-	extractedLogger := LoggerFromContext(ctxWithLogger)
+	extractedLogger := loggerFromContext(ctxWithLogger)
 	if extractedLogger != logger {
 		t.Errorf("Did not retrieve correct logger from context")
 	}
@@ -35,5 +35,5 @@ func TestLoggerFromContext_WithLogger(t *testing.T) {
 func TestLoggerFromContext_NoLogger(t *testing.T) {
 	ctx := context.Background()
 
-	assert.Panics(t, func() { LoggerFromContext(ctx) })
+	assert.Equal(t, slog.Default(), L(ctx))
 }
