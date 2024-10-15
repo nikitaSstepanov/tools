@@ -81,6 +81,9 @@ type statusType int
 
 // New returns type Error with message.
 func New(msg string, status statusType, errs ...error) Error {
+	if errs == nil {
+		errs = []error{}
+	}
 	return &errorStruct{
 		message: msg,
 		errs:    errs,
