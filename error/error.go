@@ -1,6 +1,7 @@
 package e
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -63,7 +64,7 @@ type Error interface {
 
 type errorStruct struct {
 	message string
-	err     error
+	errs    []error
 	code    statusType
 }
 
@@ -79,10 +80,10 @@ const (
 type statusType int
 
 // New returns type Error with message.
-func New(msg string, err error, status statusType) Error {
+func New(msg string, status statusType, errs ...error) Error {
 	return &errorStruct{
 		message: msg,
-		err:     err,
+		errs:    errs,
 		code:    status,
 	}
 }
@@ -92,7 +93,7 @@ func (e *errorStruct) GetMessage() string {
 }
 
 func (e *errorStruct) GetError() error {
-	return e.err
+	return errors.Join(e.errs...)
 }
 
 func (e *errorStruct) GetCode() statusType {
@@ -104,7 +105,7 @@ func (e *errorStruct) WithMessage(msg string) {
 }
 
 func (e *errorStruct) WithErr(err error) {
-	e.err = err
+	e.errs = append(e.errs, err)
 }
 
 func (e *errorStruct) WithCode(status statusType) {
@@ -140,17 +141,16 @@ func (e *errorStruct) ToHttpCode() int {
 }
 
 func (e *errorStruct) Error() string {
-	if e.message == "" && e.err == nil {
+	if e.message == "" && (e.errs == nil || (len(e.errs) == 0)) {
 		return "nil"
 	}
-	if e.message == "" {
-		return e.err.Error()
-	}
-	if e.err == nil {
+	if e.errs == nil || (len(e.errs) == 0) {
 		return e.message
 	}
-
-	return e.message + ": " + e.err.Error()
+	if e.message == "" {
+		return errors.Join(e.errs...).Error()
+	}
+	return e.message + ": " + errors.Join(e.errs...).Error()
 }
 
 func (e *errorStruct) ToGRPCErr() error {
@@ -191,7 +191,7 @@ func (e *errorStruct) SlErr() slog.Attr {
 // with an internal status code by default. If the provided error is nil, it returns nil.
 func E(err error) Error {
 	if err != nil {
-		return New("", err, Internal)
+		return New("", Internal, err)
 	}
 
 	return nil
