@@ -59,7 +59,7 @@ func TestServer_Shutdown(t *testing.T) {
 
 	go func() {
 		time.Sleep(3 * time.Second)
-		server.notify <- e.New("some msg", nil, e.Internal)
+		server.notify <- e.New("some msg", e.Internal)
 	}()
 
 	mockLogger := sl.New(&sl.Config{Type: "discard"})

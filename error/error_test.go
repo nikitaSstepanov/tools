@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 	testErr := errors.New("some error")
 	code := NotFound
 
-	err := New(msg, testErr, code)
+	err := New(msg, code, testErr)
 
 	if err.GetMessage() != msg {
 		t.Errorf("Expected message %q, got %q", msg, err.GetMessage())
@@ -35,7 +35,7 @@ func TestWithMessage(t *testing.T) {
 	initialMsg := "Initial error"
 	testErr := errors.New("some error")
 	code := Internal
-	err := New(initialMsg, testErr, code)
+	err := New(initialMsg, code, testErr)
 
 	newMsg := "Updated error"
 	err.WithMessage(newMsg)
@@ -49,7 +49,7 @@ func TestWithCode(t *testing.T) {
 	msg := "Some msg"
 	testErr := errors.New("Some error")
 	initialCode := Forbidden
-	err := New(msg, testErr, initialCode)
+	err := New(msg, initialCode, testErr)
 
 	newCode := Internal
 	err.WithCode(newCode)
@@ -74,7 +74,7 @@ func TestToHttpCode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := New("", nil, tt.code)
+		err := New("", tt.code, nil)
 		assert.Equal(t, tt.expected, err.ToHttpCode())
 	}
 }
@@ -84,30 +84,30 @@ func TestError(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		err    error
+		err    []error
 		msg    string
 		expect string
 	}{{
 		name:   "AllFields",
-		err:    errors.New("some error"),
+		err:    []error{errors.New("some error")},
 		msg:    "some message",
 		expect: "some message: some error",
 	},
 		{
 			name:   "Only Message",
-			err:    nil,
+			err:    []error{},
 			msg:    "some message",
 			expect: "some message",
 		},
 		{
 			name:   "Only error",
-			err:    errors.New("some error"),
+			err:    []error{errors.New("some error")},
 			msg:    "",
 			expect: "some error",
 		},
 		{
 			name:   "Nil fileds",
-			err:    nil,
+			err:    []error{},
 			msg:    "",
 			expect: "nil",
 		}}
@@ -116,7 +116,7 @@ func TestError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := New(tc.msg, tc.err, Internal)
+			err := New(tc.msg, Internal, tc.err...)
 
 			assert.Equal(t, tc.expect, err.Error())
 		})
@@ -127,7 +127,7 @@ func TestError(t *testing.T) {
 func TestToGRPCErr(t *testing.T) {
 	msg := "This is a gRPC error message"
 	testErr := errors.New("some grpc error")
-	err := New(msg, testErr, Internal)
+	err := New(msg, Internal, testErr)
 
 	grpcErr := err.ToGRPCErr()
 	if grpcErr == nil {
@@ -161,7 +161,7 @@ func TestToGRPCCode(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		err := New("", nil, tc.code)
+		err := New("", tc.code, nil)
 		assert.Equal(t, tc.expected, err.ToGRPCCode())
 	}
 }
@@ -170,7 +170,7 @@ func TestSlErr(t *testing.T) {
 	msg := "test error for slog"
 	testErr := errors.New("some error")
 	code := Internal
-	err := New(msg, testErr, code)
+	err := New(msg, code, testErr)
 
 	assert.Equal(t, slog.String("error", err.Error()), err.SlErr())
 }
@@ -192,7 +192,7 @@ func TestE(t *testing.T) {
 		{
 			name: "Not nil error",
 			err:  testErr,
-			want: New("", testErr, Internal),
+			want: New("", Internal, testErr),
 		},
 	}
 	for _, tt := range tests {
