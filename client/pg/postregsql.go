@@ -68,7 +68,7 @@ type Client interface {
 	Reset()
 }
 
-// Config is type for database connection
+// Config is type for database connection.
 type Config struct {
 	Host     string `yaml:"host"     env:"PG_HOST"    env-default:"localhost"`
 	Port     int    `yaml:"port"     env:"PG_PORT"    env-default:"5432"`

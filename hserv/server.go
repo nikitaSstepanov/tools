@@ -11,6 +11,7 @@ import (
 	"github.com/nikitaSstepanov/tools/sl"
 )
 
+// Config is type for server setup.
 type Config struct {
 	Url             string        `yaml:"url"             env:"SERVER_URL"              env-default:":80"`
 	ReadTimeout     time.Duration `yaml:"readTimeout"     env:"SERVER_READ_TIMEOUT"     env-default:"5s"`
