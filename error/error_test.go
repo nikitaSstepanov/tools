@@ -38,7 +38,7 @@ func TestWithMessage(t *testing.T) {
 	err := New(initialMsg, code, testErr)
 
 	newMsg := "Updated error"
-	err.WithMessage(newMsg)
+	err = err.WithMessage(newMsg)
 
 	if err.GetMessage() != newMsg {
 		t.Errorf("Expected message %q, got %q", newMsg, err.GetMessage())
@@ -52,7 +52,7 @@ func TestWithCode(t *testing.T) {
 	err := New(msg, initialCode, testErr)
 
 	newCode := Internal
-	err.WithCode(newCode)
+	err = err.WithCode(newCode)
 
 	if err.GetCode() != newCode {
 		t.Errorf("Expected code %v, got %v", newCode, err.GetCode())

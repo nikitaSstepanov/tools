@@ -48,3 +48,32 @@ func (c *Client) Send(to string, message string, subject string, contentType str
 
 	return smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.username, []string{to}, msg)
 }
+
+// Mailing sends a message to a list of recipients with the given message, subject, and content type.
+func (c *Client) Mailing(emails []string, message string, subject string, contentType string) error {
+	for i := 0; i < len(emails); i++ {
+		err := c.Send(emails[i], message, subject, contentType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// PersonalMailing sends a message to a list of recipients substituting values into given template.
+// The template format should be the same as for fmt`s functions.
+// The values are taken from a multiple, where the key is the recipient's mail, and the value is an array of values
+// that will be substituted into the template. Be careful with the order of values in the template and the array of values.
+func (c *Client) PersonalMailing(values map[string][]interface{}, template string, subject string, contentType string) error {
+	for email, vls := range values {
+		message := fmt.Sprintf(template, vls...)
+
+		err := c.Send(email, message, subject, contentType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

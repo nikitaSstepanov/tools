@@ -28,15 +28,18 @@ type Error interface {
 
 	// WithMessage sets a new error message for the error instance.
 	// This method allows users to update the error message dynamically.
-	WithMessage(string)
+	WithMessage(string) Error
 
 	// WithErr sets a new underlying error for the error instance.
 	// This method allows users to associate a different error with this custom error type.
-	WithErr(err error)
+	WithErr(error) Error
 
 	// WithCode sets a new status code for the error instance.
 	// This method allows users to update the error code dynamically.
-	WithCode(statusType)
+	WithCode(statusType) Error
+
+	// ToJson() returns erro struct with json tags.
+	ToJson() jsonError
 
 	// ToGRPCCode converts the error's status code to a gRPC error code.
 	// This method facilitates interoperability with gRPC services by providing
@@ -66,6 +69,10 @@ type errorStruct struct {
 	message string
 	errs    []error
 	code    statusType
+}
+
+type jsonError struct {
+	Error string `json:"error"`
 }
 
 const (
@@ -103,16 +110,22 @@ func (e *errorStruct) GetCode() statusType {
 	return e.code
 }
 
-func (e *errorStruct) WithMessage(msg string) {
-	e.message = msg
+func (e *errorStruct) WithMessage(msg string) Error {
+	return New(msg, e.code, e.errs...)
 }
 
-func (e *errorStruct) WithErr(err error) {
-	e.errs = append(e.errs, err)
+func (e *errorStruct) WithErr(err error) Error {
+	return New(e.message, e.code, append(e.errs, err)...)
 }
 
-func (e *errorStruct) WithCode(status statusType) {
-	e.code = status
+func (e *errorStruct) WithCode(status statusType) Error {
+	return New(e.message, status, e.errs...)
+}
+
+func (e *errorStruct) ToJson() jsonError {
+	return jsonError{
+		Error: e.message,
+	}
 }
 
 // ToHttpCode convert Error to http status code.

@@ -1,4 +1,4 @@
-package server
+package hserv
 
 import (
 	"context"
