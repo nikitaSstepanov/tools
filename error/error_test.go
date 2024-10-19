@@ -203,3 +203,36 @@ func TestE(t *testing.T) {
 		})
 	}
 }
+
+func TestToJson(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  Error
+		want JsonError
+	}{
+		{
+			name: "Default",
+			err:  New("some error", Internal),
+			want: JsonError{Error: "some error"},
+		},
+		{
+			name: "With err",
+			err:  New("some error", Internal, errors.New("invalid data")),
+			want: JsonError{Error: "some error"},
+		},
+		{
+			name: "Empty message",
+			err:  New("", Internal),
+			want: JsonError{Error: ""},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, tt.err.ToJson())
+		})
+	}
+}

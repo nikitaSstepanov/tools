@@ -39,7 +39,7 @@ type Error interface {
 	WithCode(statusType) Error
 
 	// ToJson() returns erro struct with json tags.
-	ToJson() jsonError
+	ToJson() JsonError
 
 	// ToGRPCCode converts the error's status code to a gRPC error code.
 	// This method facilitates interoperability with gRPC services by providing
@@ -71,7 +71,7 @@ type errorStruct struct {
 	code    statusType
 }
 
-type jsonError struct {
+type JsonError struct {
 	Error string `json:"error"`
 }
 
@@ -122,8 +122,8 @@ func (e *errorStruct) WithCode(status statusType) Error {
 	return New(e.message, status, e.errs...)
 }
 
-func (e *errorStruct) ToJson() jsonError {
-	return jsonError{
+func (e *errorStruct) ToJson() JsonError {
+	return JsonError{
 		Error: e.message,
 	}
 }
