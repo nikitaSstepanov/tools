@@ -5,24 +5,36 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
+	"time"
 )
+
+type Config struct {
+	Prefix  string        `yaml:"prefix" env:"HTTP_CLIENT_PREFIX" env-default:""`
+	Timeout time.Duration `yaml:"timeout" env:"HTTP_CLIENT_TIMEOUT" env-default:"5s"`
+}
 
 type Client struct {
 	prefix string
+	client *http.Client
 }
 
-func New(prefixParts ...string) *Client {
-	prefix := ""
-	
-	if len(prefixParts) != 0 {
-		prefix = strings.Join(prefixParts, "/")
-	}
-
+func New(cfg *Config) *Client {
 	return &Client{
-		prefix: prefix,
+		prefix: cfg.Prefix,
+		client: &http.Client{
+			Timeout: cfg.Timeout,
+		},
 	}
 }
+
+// "OPTIONS"                ; Section 9.2
+//| "GET"                    ; Section 9.3
+//| "HEAD"                   ; Section 9.4
+//| "POST"                   ; Section 9.5
+//| "PUT"                    ; Section 9.6
+//| "DELETE"                 ; Section 9.7
+//| "TRACE"                  ; Section 9.8
+//| "CONNECT"
 
 func (c *Client) Get(url string) ([]byte, error) {
 	if c.prefix != "" {
@@ -43,7 +55,7 @@ func (c *Client) Get(url string) ([]byte, error) {
 	return body, nil
 }
 
-func (c *Client) GetWithBind(url string, to interface{}) error {
+func (c *Client) GetWithJsonBind(url string, to interface{}) error {
 	body, err := c.Get(url)
 	if err != nil {
 		return err
@@ -61,14 +73,14 @@ func (c *Client) Post(url string, contentType string, data interface{}) ([]byte,
 	if c.prefix != "" {
 		url = c.prefix + url
 	}
-	
+
 	body, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 
 	reader := bytes.NewReader(body)
-	
+
 	resp, err := http.Post(url, contentType, reader)
 	if err != nil {
 		return nil, err
@@ -83,7 +95,7 @@ func (c *Client) Post(url string, contentType string, data interface{}) ([]byte,
 	return body, nil
 }
 
-func (c *Client) PostWithBind(url string, contentType string, data interface{}, to interface{}) error {
+func (c *Client) PostWithJsonBind(url string, contentType string, data interface{}, to interface{}) error {
 	body, err := c.Post(url, contentType, data)
 	if err != nil {
 		return err
@@ -93,7 +105,6 @@ func (c *Client) PostWithBind(url string, contentType string, data interface{}, 
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
-
