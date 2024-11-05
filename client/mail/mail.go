@@ -51,14 +51,14 @@ func (c *Client) Send(to string, message string, subject string, contentType str
 
 // Mailing sends a message to a list of recipients with the given message, subject, and content type.
 func (c *Client) Mailing(emails []string, message string, subject string, contentType string) error {
-	for i := 0; i < len(emails); i++ {
-		err := c.Send(emails[i], message, subject, contentType)
-		if err != nil {
-			return err
-		}
-	}
+	auth := smtp.PlainAuth(c.identity, c.username, c.password, c.host)
 
-	return nil
+	msg := []byte(fmt.Sprintf(
+		"From: %s\r\nSubject: %s\n%s\n\n%s\r\n",
+		c.username, subject, contentType, message,
+	))
+
+	return smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.username, emails, []byte(msg))
 }
 
 // PersonalMailing sends a message to a list of recipients substituting values into given template.
