@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log/slog"
 	"context"
-	std "log"
+	"encoding/json"
 	"io"
+	std "log"
+	"log/slog"
 
 	"github.com/fatih/color"
 )

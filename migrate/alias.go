@@ -38,6 +38,6 @@ func diaToStr(d Dialect) string {
 
 	default:
 		return "postgres"
-		
+
 	}
 }

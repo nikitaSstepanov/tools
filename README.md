@@ -5,8 +5,9 @@
 
 It contains wrappers over postgres, redis and other clients. There are also convenient wrappers over slog, net/http, goose. In addition, tools contains our favorite package "e" ("error"), which allows you to handle errors more flexibly.
 
-### Installation
-
+### Getting Started
+To add tools to your Go modules run:
+ 
 ```shell
 go get github.com/nikitaSstepanov/tools
 ```
