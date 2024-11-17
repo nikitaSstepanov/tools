@@ -1,6 +1,9 @@
 package httper
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 const (
 	GetMethod     method = "GET"
@@ -93,3 +96,25 @@ type method string
 type contentType string
 
 type ServeMux = http.ServeMux
+
+var DefaultClient = NewClient(&ClientCfg{Prefix: "", Timeout: 5 * time.Second})
+
+func Get(url string) (*Resp, error) {
+	return DefaultClient.Get(url)
+}
+
+func GetWithJsonBind(url string, to interface{}) (*Resp, error) {
+	return DefaultClient.GetWithJsonBind(url, to)
+}
+
+func PostWithJson(url string, data interface{}) (*Resp, error) {
+	return DefaultClient.PostWithJson(url, data)
+}
+
+func PostWithJsonBind(url string, data interface{}, to interface{}) (*Resp, error) {
+	return DefaultClient.PostWithJsonBind(url, data, to)
+}
+
+func Do(req *Req) (*Resp, error) {
+	return DefaultClient.Do(req)
+}
