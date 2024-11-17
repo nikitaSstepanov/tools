@@ -17,14 +17,14 @@ func TestNewServer(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cfg := &Config{
+	cfg := &ServerCfg{
 		ReadTimeout:     5 * time.Second,
 		WriteTimeout:    10 * time.Second,
 		Url:             ":8080",
 		ShutdownTimeout: 30 * time.Second,
 	}
 
-	server := New(handler, cfg)
+	server := NewServer(cfg, handler)
 
 	// Assertions using testify
 	assert.NotNil(t, server, "Expected non-nil Server")
@@ -44,14 +44,14 @@ func TestServer_Shutdown(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cfg := &Config{
+	cfg := &ServerCfg{
 		ReadTimeout:     5 * time.Second,
 		WriteTimeout:    10 * time.Second,
 		Url:             ":8080",
 		ShutdownTimeout: 30 * time.Second,
 	}
 
-	server := New(handler, cfg)
+	server := NewServer(cfg, handler)
 
 	go server.Start()
 
@@ -75,14 +75,14 @@ func TestServer_Notify(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	cfg := &Config{
+	cfg := &ServerCfg{
 		ReadTimeout:     5 * time.Second,
 		WriteTimeout:    10 * time.Second,
 		Url:             ":8080",
 		ShutdownTimeout: 30 * time.Second,
 	}
 
-	server := New(handler, cfg)
+	server := NewServer(cfg, handler)
 
 	// Start the server
 	server.Start()

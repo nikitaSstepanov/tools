@@ -1,5 +1,23 @@
 package httper
 
+import "net/http"
+
+const (
+	GetMethod     method = "GET"
+	PostMethod    method = "POST"
+	PutMethod     method = "PUT"
+	DeleteMethod  method = "DELETE"
+	OptionsMethod method = "OPTIONS"
+	HeadMethod    method = "HEAD"
+	TraceMethod   method = "TRACE"
+	ConnectMethod method = "CONNECT"
+
+	JsonType contentType = "application/json"
+	XmlType  contentType = "application/xml"
+	TextType contentType = "text/plain"
+	HtmlType contentType = "text/html"
+)
+
 const (
 	StatusContinue           = 100
 	StatusSwitchingProtocols = 101
@@ -69,3 +87,9 @@ const (
 	StatusNotExtended                   = 510
 	StatusNetworkAuthenticationRequired = 511
 )
+
+type method string
+
+type contentType string
+
+type ServeMux = http.ServeMux

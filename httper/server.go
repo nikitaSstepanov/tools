@@ -12,7 +12,7 @@ import (
 )
 
 // Config is type for server setup.
-type Config struct {
+type ServerCfg struct {
 	Url             string        `yaml:"url"             env:"SERVER_URL"              env-default:":80"`
 	ReadTimeout     time.Duration `yaml:"readTimeout"     env:"SERVER_READ_TIMEOUT"     env-default:"5s"`
 	WriteTimeout    time.Duration `yaml:"writeTimeout"    env:"SERVER_WRITE_TIMEOUT"    env-default:"5s"`
@@ -25,7 +25,7 @@ type Server struct {
 	shutdownTimeout time.Duration
 }
 
-func New(handler http.Handler, cfg *Config) *Server {
+func NewServer(cfg *ServerCfg, handler http.Handler) *Server {
 	httpServer := &http.Server{
 		Handler:      handler,
 		ReadTimeout:  cfg.ReadTimeout,
