@@ -1,4 +1,4 @@
-package hserv
+package httper
 
 const (
 	StatusContinue           = 100
