@@ -187,6 +187,8 @@ func (e *errorStruct) WithCtx(c ctx.Context) Error {
 
 	err.log = slog.New(c.SlHandler())
 
+	c.AddErr(err)
+
 	return err
 }
 

@@ -103,6 +103,8 @@ func (c *ctx) GetErr() error {
 
 	if len(c.errors) > 1 {
 		c.errors = c.errors[1:]
+	} else {
+		c.errors = make([]error, 0)
 	}
 
 	c.mu.Unlock()
