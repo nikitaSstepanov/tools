@@ -1,11 +1,15 @@
 package e
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"testing"
 
+	"github.com/nikitaSstepanov/tools/ctx"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,6 +35,74 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestGetMessage(t *testing.T) {
+	msg := "Error"
+	testErr := errors.New("some error")
+	code := Internal
+	err := New(msg, code, testErr)
+
+	assert.Equal(t, msg, err.GetMessage())
+}
+
+func TestGetError(t *testing.T) {
+	msg := "error"
+	testErr1 := errors.New("some error 1")
+	testErr2 := errors.New("some error 2")
+	code := Internal
+
+	joinedErr := errors.Join(testErr1, testErr2)
+	err := New(msg, code, testErr1, testErr2)
+
+	assert.Equal(t, joinedErr, err.GetError())
+}
+
+func TestGetTag(t *testing.T) {
+	msg := "error"
+	code := Internal
+	err := New(msg, code)
+
+	key := "key"
+	value := "value"
+
+	err = err.WithTag(key, value)
+
+	assert.Equal(t, value, err.GetTag(key))
+}
+
+func TestGetCode(t *testing.T) {
+	msg := "error"
+	code := Internal
+	err := New(msg, code)
+
+	assert.Equal(t, code, err.GetCode())
+}
+
+func TestLog(t *testing.T) {
+	var buff bytes.Buffer
+
+	mockHandler := slog.NewJSONHandler(&buff, &slog.HandlerOptions{AddSource: false, Level: slog.LevelInfo})
+	mockLog := slog.New(mockHandler)
+
+	slog.SetDefault(mockLog)
+
+	msg := "error"
+	code := Internal
+	err := New(msg, code)
+
+	err.Log()
+
+	expectedLevel := `"level":"ERROR"`
+	expectedMsg := `"msg":""`
+	expectedAttr := `"error":"error"`
+
+	parts := strings.Split(buff.String()[:83], ",")
+	fmt.Println(parts)
+
+	assert.Equal(t, expectedLevel, parts[1])
+	assert.Equal(t, expectedMsg, parts[2])
+	assert.Equal(t, expectedAttr, parts[3])
+}
+
 func TestWithMessage(t *testing.T) {
 	initialMsg := "Initial error"
 	testErr := errors.New("some error")
@@ -45,6 +117,50 @@ func TestWithMessage(t *testing.T) {
 	}
 }
 
+func TestWithErr(t *testing.T) {
+	msg := "error"
+	code := Internal
+	err := New(msg, code)
+
+	testErr := errors.New("some error")
+	joined := errors.Join(testErr)
+
+	err = err.WithErr(testErr)
+
+	assert.Equal(t, joined, err.GetError())
+}
+
+func TestWithTag(t *testing.T) {
+	msg := "error"
+	code := Internal
+	err := New(msg, code)
+
+	key := "key"
+	value := "value"
+
+	err = err.WithTag(key, value)
+
+	assert.Equal(t, value, err.GetTag(key))
+}
+
+func TestWithCtx(t *testing.T) {
+	c := ctx.New(slog.Default())
+
+	key := "key"
+	value := "value"
+
+	c.AddValue(key, value, true)
+
+	msg := "error"
+	code := Internal
+
+	err := New(msg, code)
+
+	err = err.WithCtx(c)
+
+	assert.Equal(t, value, err.GetTag(key))
+}
+
 func TestWithCode(t *testing.T) {
 	msg := "Some msg"
 	testErr := errors.New("Some error")
@@ -56,6 +172,39 @@ func TestWithCode(t *testing.T) {
 
 	if err.GetCode() != newCode {
 		t.Errorf("Expected code %v, got %v", newCode, err.GetCode())
+	}
+}
+
+func TestToJson(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  Error
+		want JsonError
+	}{
+		{
+			name: "Default",
+			err:  New("some error", Internal),
+			want: JsonError{Error: "some error"},
+		},
+		{
+			name: "With err",
+			err:  New("some error", Internal, errors.New("invalid data")),
+			want: JsonError{Error: "some error"},
+		},
+		{
+			name: "Empty message",
+			err:  New("", Internal),
+			want: JsonError{Error: ""},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, tt.err.ToJson())
+		})
 	}
 }
 
@@ -121,7 +270,6 @@ func TestError(t *testing.T) {
 			assert.Equal(t, tc.expect, err.Error())
 		})
 	}
-
 }
 
 func TestToGRPCErr(t *testing.T) {
@@ -200,39 +348,6 @@ func TestE(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, tt.want, E(tt.err))
-		})
-	}
-}
-
-func TestToJson(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		err  Error
-		want JsonError
-	}{
-		{
-			name: "Default",
-			err:  New("some error", Internal),
-			want: JsonError{Error: "some error"},
-		},
-		{
-			name: "With err",
-			err:  New("some error", Internal, errors.New("invalid data")),
-			want: JsonError{Error: "some error"},
-		},
-		{
-			name: "Empty message",
-			err:  New("", Internal),
-			want: JsonError{Error: ""},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, tt.err.ToJson())
 		})
 	}
 }
