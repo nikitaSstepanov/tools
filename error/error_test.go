@@ -90,14 +90,13 @@ func TestLog(t *testing.T) {
 
 	err.Log()
 
-	expectedLevel := `"level":"ERROR"`
-	expectedMsg := `"msg":""`
-	//expectedAttr := `"error":"error"`
+	expectedLog := `"level":"ERROR","msg":"","error":"error"`
 
-	parts := strings.Split(buff.String()[:83], ",")
+	parts := strings.Split(buff.String(), ",")
+	actualLog := strings.Join(parts[1:], ",")
+	actualLog = actualLog[:len(actualLog)-2]
 
-	assert.Equal(t, expectedLevel, parts[1])
-	assert.Equal(t, expectedMsg, parts[2])
+	assert.Equal(t, expectedLog, actualLog)
 }
 
 func TestWithMessage(t *testing.T) {
