@@ -1,10 +1,23 @@
 package sl
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestL(t *testing.T) {
+	c := context.TODO()
+	c = ContextWithLogger(c, slog.Default())
+
+	log := L(c)
+
+	assert.Equal(t, slog.Default(), log)
+}
 
 func TestFloat32Attr(t *testing.T) {
 	key := "testKey"
@@ -76,4 +89,8 @@ func TestTimeAttr(t *testing.T) {
 		t.Errorf("TimeAttr() = {Key: %s, Value: %v}, want {Key: %s, Value: %v}",
 			attr.Key, attr.Value, key, expectedValue)
 	}
+}
+
+func TestDefault(t *testing.T) {
+	assert.Equal(t, slog.Default(), Default())
 }
