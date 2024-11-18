@@ -3,7 +3,6 @@ package e
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -96,7 +95,6 @@ func TestLog(t *testing.T) {
 	expectedAttr := `"error":"error"`
 
 	parts := strings.Split(buff.String()[:83], ",")
-	fmt.Println(parts)
 
 	assert.Equal(t, expectedLevel, parts[1])
 	assert.Equal(t, expectedMsg, parts[2])
