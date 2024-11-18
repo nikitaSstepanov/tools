@@ -4,7 +4,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
+	"github.com/nikitaSstepanov/tools/ctx"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -22,9 +24,13 @@ type Error interface {
 	// This method provides access to the original error that may contain more details.
 	GetError() error
 
+	GetTag(key string) interface{}
+
 	// GetCode returns the status code associated with the error.
 	// The statusType can be a custom type that represents various error codes.
 	GetCode() statusType
+
+	Log(msg ...string)
 
 	// WithMessage sets a new error message for the error instance.
 	// This method allows users to update the error message dynamically.
@@ -33,6 +39,10 @@ type Error interface {
 	// WithErr sets a new underlying error for the error instance.
 	// This method allows users to associate a different error with this custom error type.
 	WithErr(error) Error
+
+	WithTag(key string, value interface{}) Error
+
+	WithCtx(c ctx.Context) Error
 
 	// WithCode sets a new status code for the error instance.
 	// This method allows users to update the error code dynamically.
@@ -68,7 +78,9 @@ type Error interface {
 type errorStruct struct {
 	message string
 	errs    []error
+	tags    map[string]interface{}
 	code    statusType
+	log     *slog.Logger
 }
 
 type JsonError struct {
@@ -91,10 +103,13 @@ func New(msg string, status statusType, errs ...error) Error {
 	if errs == nil {
 		errs = []error{}
 	}
+
 	return &errorStruct{
 		message: msg,
 		errs:    errs,
+		tags:    make(map[string]interface{}),
 		code:    status,
+		log:     slog.Default(),
 	}
 }
 
@@ -106,8 +121,30 @@ func (e *errorStruct) GetError() error {
 	return errors.Join(e.errs...)
 }
 
+func (e *errorStruct) GetTag(key string) interface{} {
+	return e.tags[key]
+}
+
 func (e *errorStruct) GetCode() statusType {
 	return e.code
+}
+
+func (e *errorStruct) Log(msg ...string) {
+	l := e.log
+
+	l = l.With(e.SlErr())
+
+	for key, value := range e.tags {
+		l = l.With(key, value)
+	}
+
+	message := ""
+
+	if len(msg) != 0 {
+		message = strings.Join(msg, " ")
+	}
+
+	l.Error(message)
 }
 
 func (e *errorStruct) WithMessage(msg string) Error {
@@ -116,6 +153,41 @@ func (e *errorStruct) WithMessage(msg string) Error {
 
 func (e *errorStruct) WithErr(err error) Error {
 	return New(e.message, e.code, append(e.errs, err)...)
+}
+
+func (e *errorStruct) WithTag(key string, value interface{}) Error {
+	err := New(e.message, e.code, e.errs...).(*errorStruct)
+
+	for key, value := range e.tags {
+		err.tags[key] = value
+	}
+
+	err.tags[key] = value
+
+	return err
+}
+
+func (e *errorStruct) WithCtx(c ctx.Context) Error {
+	err := New(e.message, e.code, e.errs...).(*errorStruct)
+
+	ctxErr := c.Err()
+	if ctxErr != nil {
+		err.errs = append(err.errs, c.Err())
+	}
+
+	for key, value := range e.tags {
+		err.tags[key] = value
+	}
+
+	for key, value := range c.GetValues() {
+		if value.Share {
+			err.tags[key] = value.Val
+		}
+	}
+
+	err.log = slog.New(c.SlHandler())
+
+	return err
 }
 
 func (e *errorStruct) WithCode(status statusType) Error {
@@ -207,6 +279,10 @@ func (e *errorStruct) SlErr() slog.Attr {
 // with an internal status code by default. If the provided error is nil, it returns nil.
 func E(err error) Error {
 	if err != nil {
+		if _, ok := err.(Error); ok {
+			return err.(Error)
+		}
+
 		return New("", Internal, err)
 	}
 
