@@ -247,6 +247,36 @@ func (e *errorStruct) ToGRPCErr() error {
 	return status.Error(e.ToGRPCCode(), e.message)
 }
 
+func FromGRPCErr(err error) Error {
+	stat, _ := status.FromError(err)
+
+	var code statusType
+
+	switch stat.Code() {
+
+	case codes.Internal:
+		code = Internal
+
+	case codes.NotFound:
+		code = NotFound
+
+	case codes.InvalidArgument:
+		code = BadInput
+
+	case codes.Unauthenticated:
+		code = Unauthorize
+
+	case codes.AlreadyExists:
+		code = Conflict
+
+	default:
+		code = Internal
+
+	}
+
+	return New(stat.Message(), code)
+}
+
 // ToGRPCCode convert Error to grpc status code.
 func (e *errorStruct) ToGRPCCode() codes.Code {
 	switch e.code {
