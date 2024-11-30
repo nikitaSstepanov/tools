@@ -27,8 +27,8 @@ type Error interface {
 	GetTag(key string) interface{}
 
 	// GetCode returns the status code associated with the error.
-	// The statusType can be a custom type that represents various error codes.
-	GetCode() statusType
+	// The StatusType can be a custom type that represents various error codes.
+	GetCode() StatusType
 
 	Log(msg ...string)
 
@@ -46,7 +46,7 @@ type Error interface {
 
 	// WithCode sets a new status code for the error instance.
 	// This method allows users to update the error code dynamically.
-	WithCode(statusType) Error
+	WithCode(StatusType) Error
 
 	// ToJson() returns erro struct with json tags.
 	ToJson() JsonError
@@ -79,7 +79,7 @@ type errorStruct struct {
 	message string
 	errs    []error
 	tags    map[string]interface{}
-	code    statusType
+	code    StatusType
 	log     *slog.Logger
 }
 
@@ -88,7 +88,7 @@ type JsonError struct {
 }
 
 const (
-	Internal statusType = iota
+	Internal StatusType = iota
 	NotFound
 	BadInput
 	Conflict
@@ -96,10 +96,10 @@ const (
 	Unauthorize
 )
 
-type statusType int
+type StatusType int
 
 // New returns type Error with message.
-func New(msg string, status statusType, errs ...error) Error {
+func New(msg string, status StatusType, errs ...error) Error {
 	if errs == nil {
 		errs = []error{}
 	}
@@ -125,7 +125,7 @@ func (e *errorStruct) GetTag(key string) interface{} {
 	return e.tags[key]
 }
 
-func (e *errorStruct) GetCode() statusType {
+func (e *errorStruct) GetCode() StatusType {
 	return e.code
 }
 
@@ -192,7 +192,7 @@ func (e *errorStruct) WithCtx(c ctx.Context) Error {
 	return err
 }
 
-func (e *errorStruct) WithCode(status statusType) Error {
+func (e *errorStruct) WithCode(status StatusType) Error {
 	return New(e.message, status, e.errs...)
 }
 
@@ -250,7 +250,7 @@ func (e *errorStruct) ToGRPCErr() error {
 func FromGRPCErr(err error) Error {
 	stat, _ := status.FromError(err)
 
-	var code statusType
+	var code StatusType
 
 	switch stat.Code() {
 
