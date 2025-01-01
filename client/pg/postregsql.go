@@ -68,6 +68,8 @@ type Client interface {
 	Reset()
 
 	RegisterTypes(types []string) error
+
+	GetPool() *pgxpool.Pool
 }
 
 // Config is type for database connection.
@@ -154,4 +156,8 @@ func (pc *pgclient) RegisterTypes(types []string) error {
 	pc.Pool = db
 
 	return nil
+}
+
+func (pc *pgclient) GetPool() *pgxpool.Pool {
+	return pc.Pool
 }
