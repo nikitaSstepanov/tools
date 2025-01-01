@@ -66,6 +66,8 @@ type Client interface {
 	// It is safe to reset a pool while connections are checked out. Those connections will be closed when they are returned
 	// to the pool.
 	Reset()
+
+	RegisterTypes(types []string) error
 }
 
 // Config is type for database connection.
@@ -78,21 +80,17 @@ type Config struct {
 	SSLMode  string `yaml:"sslmode"  env:"PG_SSLMODE" env-default:"disabled"`
 }
 
-func getConfig(cfg *Config) (*pgxpool.Config, error) {
+type pgclient struct {
+	afterConnectFuncs []func(ctx context.Context, conn *pgx.Conn) error
+	*pgxpool.Pool
+}
+
+// ConnectToDb returns a pointer to a pgxpool.Pool representing the database connection pool.
+func New(ctx context.Context, cfg *Config) (Client, error) {
 	config, err := pgxpool.ParseConfig(fmt.Sprintf(
 		"user=%s password=%s host=%s port=%d dbname=%s sslmode=%s",
 		cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
 	))
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
-
-// ConnectToDb returns a pointer to a pgxpool.Pool representing the database connection pool.
-func ConnectToDb(ctx context.Context, cfg *Config) (*pgxpool.Pool, error) {
-	config, err := getConfig(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -106,5 +104,54 @@ func ConnectToDb(ctx context.Context, cfg *Config) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	return db, nil
+	client := &pgclient{
+		Pool:              db,
+		afterConnectFuncs: make([]func(ctx context.Context, conn *pgx.Conn) error, 0),
+	}
+
+	return client, nil
+}
+
+func (pc *pgclient) RegisterTypes(types []string) error {
+	function := func(ctx context.Context, conn *pgx.Conn) error {
+		for _, typeName := range types {
+			t, err := conn.LoadType(ctx, typeName)
+			if err != nil {
+				return err
+			}
+
+			conn.TypeMap().RegisterType(t)
+		}
+
+		return nil
+	}
+
+	pc.afterConnectFuncs = append(pc.afterConnectFuncs, function)
+
+	cfg := pc.Pool.Config()
+
+	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		for _, f := range pc.afterConnectFuncs {
+			if err := f(ctx, conn); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	ctx := context.Background()
+
+	db, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := db.Ping(ctx); err != nil {
+		return err
+	}
+
+	pc.Pool = db
+
+	return nil
 }
