@@ -14,7 +14,7 @@ type Client interface {
 
 	RegisterTypes(types []string) error
 
-	GetPool() Pool
+	ToPgx() (*pgxpool.Pool, error)
 }
 
 // Config is type for database connection.
@@ -116,6 +116,18 @@ func (pc *pgclient) RegisterTypes(types []string) error {
 	return nil
 }
 
-func (pc *pgclient) GetPool() Pool {
-	return pc.Pool
+func (pc *pgclient) ToPgx() (*pgxpool.Pool, error) {
+	cfg := pc.Pool.Config()
+	ctx := context.Background()
+
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+
+	return pool, nil
 }
