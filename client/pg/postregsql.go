@@ -14,7 +14,7 @@ type Client interface {
 
 	RegisterTypes(types []string) error
 
-	ToPgx() (*pgxpool.Pool, error)
+	ToPgx() *pgxpool.Pool
 }
 
 // Config is type for database connection.
@@ -29,7 +29,7 @@ type Config struct {
 
 type pgclient struct {
 	afterConnectFuncs []func(ctx context.Context, conn *Conn) error
-	Pool
+	*pgxpool.Pool
 }
 
 // ConnectToDb returns a pointer to a pgxpool.Pool representing the database connection pool.
@@ -60,12 +60,19 @@ func New(ctx context.Context, cfg *Config) (Client, error) {
 }
 
 func NewWithPool(ctx context.Context, pool Pool) (Client, error) {
-	if err := pool.Ping(ctx); err != nil {
+	cfg := pool.Config()
+
+	pg, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := pg.Ping(ctx); err != nil {
 		return nil, err
 	}
 
 	client := &pgclient{
-		Pool:              pool,
+		Pool:              pg,
 		afterConnectFuncs: make([]func(ctx context.Context, conn *Conn) error, 0),
 	}
 
@@ -116,18 +123,6 @@ func (pc *pgclient) RegisterTypes(types []string) error {
 	return nil
 }
 
-func (pc *pgclient) ToPgx() (*pgxpool.Pool, error) {
-	cfg := pc.Pool.Config()
-	ctx := context.Background()
-
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := pool.Ping(ctx); err != nil {
-		return nil, err
-	}
-
-	return pool, nil
+func (pc *pgclient) ToPgx() *pgxpool.Pool {
+	return pc.Pool
 }
