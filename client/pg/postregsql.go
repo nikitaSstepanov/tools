@@ -114,6 +114,19 @@ func New(ctx context.Context, cfg *Config) (Client, error) {
 	return client, nil
 }
 
+func NewWithPool(ctx context.Context, pool *pgxpool.Pool) (Client, error) {
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+
+	client := &pgclient{
+		Pool: pool,
+		afterConnectFuncs: make([]func(ctx context.Context, conn *pgx.Conn) error, 0),
+	}
+
+	return client, nil
+}
+
 func (pc *pgclient) RegisterTypes(types []string) error {
 	function := func(ctx context.Context, conn *pgx.Conn) error {
 		for _, typeName := range types {
