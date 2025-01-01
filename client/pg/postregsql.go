@@ -59,20 +59,9 @@ func New(ctx context.Context, cfg *Config) (Client, error) {
 	return client, nil
 }
 
-func NewWithPool(ctx context.Context, pool Pool) (Client, error) {
-	cfg := pool.Config()
-
-	pg, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := pg.Ping(ctx); err != nil {
-		return nil, err
-	}
-
+func NewWithPool(ctx context.Context, pool *pgxpool.Pool) (Client, error) {
 	client := &pgclient{
-		Pool:              pg,
+		Pool:              pool,
 		afterConnectFuncs: make([]func(ctx context.Context, conn *Conn) error, 0),
 	}
 
