@@ -48,7 +48,7 @@ func (c *Client) Get(url string) (*Resp, error) {
 	return newResp(resp, body), nil
 }
 
-func (c *Client) GetWithJsonBind(url string, to interface{}) (*Resp, error) {
+func (c *Client) GetJson(url string, to interface{}) (*Resp, error) {
 	resp, err := c.Get(url)
 	if err != nil {
 		return nil, err

@@ -56,6 +56,9 @@ func NewWithCtx(base context.Context, log *slog.Logger) Context {
 }
 
 func (c *ctx) GetValue(key string) *Value {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	value := c.data[key]
 	if value.Val == nil {
 		return nil
@@ -69,6 +72,9 @@ func (c *ctx) GetValues() map[string]Value {
 }
 
 func (c *ctx) AddValue(key string, val interface{}, share bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.data[key] = Value{
 		val, share,
 	}
@@ -94,6 +100,7 @@ func (c *ctx) AddErr(err error) {
 
 func (c *ctx) GetErr() error {
 	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	if len(c.errors) == 0 {
 		return nil
@@ -106,8 +113,6 @@ func (c *ctx) GetErr() error {
 	} else {
 		c.errors = make([]error, 0)
 	}
-
-	c.mu.Unlock()
 
 	return err
 }

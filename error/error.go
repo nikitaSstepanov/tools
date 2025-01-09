@@ -83,21 +83,6 @@ type errorStruct struct {
 	log     *slog.Logger
 }
 
-type JsonError struct {
-	Error string `json:"error"`
-}
-
-const (
-	Internal StatusType = iota
-	NotFound
-	BadInput
-	Conflict
-	Forbidden
-	Unauthorize
-)
-
-type StatusType int
-
 // New returns type Error with message.
 func New(msg string, status StatusType, errs ...error) Error {
 	if errs == nil {

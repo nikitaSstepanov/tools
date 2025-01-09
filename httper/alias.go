@@ -103,8 +103,8 @@ func Get(url string) (*Resp, error) {
 	return DefaultClient.Get(url)
 }
 
-func GetWithJsonBind(url string, to interface{}) (*Resp, error) {
-	return DefaultClient.GetWithJsonBind(url, to)
+func GetJson(url string, to interface{}) (*Resp, error) {
+	return DefaultClient.GetJson(url, to)
 }
 
 func PostWithJson(url string, data interface{}) (*Resp, error) {
