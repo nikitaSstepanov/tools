@@ -19,9 +19,14 @@ import (
 
 var (
 	configPath = "config/config.yaml"
+	config     = &toolsConfig{}
 )
 
 func Init(path ...string) error {
+	if len(path) > 1 {
+		return errors.New("there should be only one config path")
+	}
+
 	if err := godotenv.Load(".env"); err != nil {
 		return err
 	}
@@ -30,47 +35,31 @@ func Init(path ...string) error {
 
 	if cfgPath != "" {
 		configPath = cfgPath
-		return nil
-	}
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return errors.New("there should be only one config path")
-		}
-
+	} else if len(path) != 0 {
 		configPath = path[0]
+	}
+
+	var cfg toolsConfig
+
+	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		return nil
 	}
+
+	config = &cfg
 
 	return nil
 }
 
-func Pg(path ...string) (pg.Client, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return nil, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg pgConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
-
+func Pg() (pg.Client, error) {
 	ctx := context.Background()
 
-	postgres, err := pg.New(ctx, &cfg.Postgres)
+	postgres, err := pg.New(ctx, &config.Postgres)
 	if err != nil {
 		return nil, err
 	}
 
-	if cfg.Postgres.MigrationsRun {
-		err := migrate.MigratePg(postgres.ToPgx(), cfg.Postgres.MigrationsPath)
+	if config.Postgres.MigrationsRun {
+		err := migrate.MigratePg(postgres.ToPgx(), config.Postgres.MigrationsPath)
 		if err != nil {
 			return nil, err
 		}
@@ -79,26 +68,10 @@ func Pg(path ...string) (pg.Client, error) {
 	return postgres, nil
 }
 
-func Redis(path ...string) (redis.Client, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return redis.Client{}, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg redisConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return redis.Client{}, err
-	}
-
+func Redis() (redis.Client, error) {
 	ctx := context.Background()
 
-	rs, err := redis.New(ctx, &cfg.Redis)
+	rs, err := redis.New(ctx, &config.Redis)
 	if err != nil {
 		return redis.Client{}, err
 	}
@@ -106,82 +79,18 @@ func Redis(path ...string) (redis.Client, error) {
 	return rs, nil
 }
 
-func Sl(path ...string) (*sl.Logger, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return nil, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg slConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
-
-	return sl.New(&cfg.Logger), nil
+func Sl() *sl.Logger {
+	return sl.New(&config.Logger)
 }
 
-func HttpServer(handler http.Handler, path ...string) (*httper.Server, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return nil, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg httpServerConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
-
-	return httper.NewServer(&cfg.Server, handler), nil
+func HttpServer(handler http.Handler) *httper.Server {
+	return httper.NewServer(&config.HttpServer, handler)
 }
 
-func Mail(path ...string) (*mail.Client, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return nil, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg mailConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
-
-	return mail.New(&cfg.Mail), nil
+func Mail() *mail.Client {
+	return mail.New(&config.Mail)
 }
 
-func Coder(path ...string) (*coder.Coder, error) {
-	cfgPath := configPath
-
-	if len(path) != 0 {
-		if len(path) > 1 {
-			return nil, errors.New("there should be only one config path")
-		}
-
-		cfgPath = path[0]
-	}
-
-	var cfg coderConfig
-
-	if err := cleanenv.ReadConfig(cfgPath, &cfg); err != nil {
-		return nil, err
-	}
-
-	return coder.New(&cfg.Coder), nil
+func Coder() *coder.Coder {
+	return coder.New(&config.Coder)
 }

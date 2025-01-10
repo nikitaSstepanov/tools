@@ -9,26 +9,11 @@ import (
 	"github.com/nikitaSstepanov/tools/utils/coder"
 )
 
-type pgConfig struct {
-	Postgres pg.Config `yaml:"postgres"`
-}
-
-type redisConfig struct {
-	Redis redis.Config `yaml:"redis"`
-}
-
-type slConfig struct {
-	Logger sl.Config `yaml:"logger"`
-}
-
-type httpServerConfig struct {
-	Server httper.ServerCfg `yaml:"server"`
-}
-
-type mailConfig struct {
-	Mail mail.Config `yaml:"mail"`
-}
-
-type coderConfig struct {
-	Coder coder.Config `yaml:"coder"`
+type toolsConfig struct {
+	Postgres   pg.Config        `yaml:"postgres"`
+	Redis      redis.Config     `yaml:"redis"`
+	Logger     sl.Config        `yaml:"logger"`
+	HttpServer httper.ServerCfg `yaml:"http_server"`
+	Mail       mail.Config      `yaml:"mail"`
+	Coder      coder.Config     `yaml:"coder"`
 }
