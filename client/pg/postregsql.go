@@ -19,12 +19,14 @@ type Client interface {
 
 // Config is type for database connection.
 type Config struct {
-	Host     string `yaml:"host"     env:"PG_HOST"    env-default:"localhost"`
-	Port     int    `yaml:"port"     env:"PG_PORT"    env-default:"5432"`
-	DBName   string `yaml:"dbname"   env:"PG_NAME"    env-default:"postgres"`
-	Username string `yaml:"username" env:"PG_USER"`
-	Password string `env:"POSTGRES_PASSWORD"`
-	SSLMode  string `yaml:"sslmode"  env:"PG_SSLMODE" env-default:"disabled"`
+	Host           string `yaml:"host"     env:"PG_HOST"    env-default:"localhost"`
+	Port           int    `yaml:"port"     env:"PG_PORT"    env-default:"5432"`
+	DBName         string `yaml:"dbname"   env:"PG_NAME"    env-default:"postgres"`
+	Username       string `yaml:"username" env:"PG_USER"`
+	Password       string `env:"POSTGRES_PASSWORD"`
+	SSLMode        string `yaml:"sslmode"  env:"PG_SSLMODE" env-default:"disabled"`
+	MigrationsRun  bool   `yaml:"migrations_run" env:"PG_MIGRATIONS_RUN" env-default:"false"`
+	MigrationsPath string `yaml:"migrations_path" env:"PG_MIGRATIONS_PATH"`
 }
 
 type pgclient struct {

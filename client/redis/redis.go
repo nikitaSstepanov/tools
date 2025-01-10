@@ -24,7 +24,7 @@ func getConfig(cfg *Config) *redis.Options {
 }
 
 // ConnectToRedis returns a client to the Redis Server specified by Options.
-func ConnectToRedis(ctx context.Context, cfg *Config) (Client, error) {
+func New(ctx context.Context, cfg *Config) (Client, error) {
 	config := getConfig(cfg)
 
 	client := redis.NewClient(config)
