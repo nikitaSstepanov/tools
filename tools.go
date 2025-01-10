@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	configPath = "config/config.yaml"
+	ConfigPath = "config/config.yaml"
 	config     = &toolsConfig{}
 )
 
@@ -34,14 +34,14 @@ func Init(path ...string) error {
 	cfgPath := os.Getenv("CONFIG_PATH")
 
 	if cfgPath != "" {
-		configPath = cfgPath
+		ConfigPath = cfgPath
 	} else if len(path) != 0 {
-		configPath = path[0]
+		ConfigPath = path[0]
 	}
 
 	var cfg toolsConfig
 
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
+	if err := cleanenv.ReadConfig(ConfigPath, &cfg); err != nil {
 		return nil
 	}
 
