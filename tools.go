@@ -22,13 +22,15 @@ var (
 	config     = &toolsConfig{}
 )
 
-func Init(path ...string) error {
+func Init(useDotenv bool, path ...string) error {
 	if len(path) > 1 {
 		return errors.New("there should be only one config path")
 	}
 
-	if err := godotenv.Load(".env"); err != nil {
-		return err
+	if useDotenv {
+		if err := godotenv.Load(".env"); err != nil {
+			return err
+		}
 	}
 
 	cfgPath := os.Getenv("CONFIG_PATH")
